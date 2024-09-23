@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hello_flutter/my_drag.dart';
 
 void main() {
   runApp(Dragprototype());
@@ -167,8 +168,8 @@ class _CalendarLongPressDraggableState
   var feedbackOffset = Offset.zero;
   var fiveMinuteIncrements = 0;
 
-  Offset calendarDragAnchorStrategy(
-      Draggable<Object> draggable, BuildContext context, Offset position) {
+
+  Offset calendarDragAnchorStrategy(BuildContext context, Offset position) {
     final RenderBox renderObject = context.findRenderObject()! as RenderBox;
     setState(() {
       feedbackOffset = position;
@@ -178,51 +179,80 @@ class _CalendarLongPressDraggableState
 
   @override
   Widget build(BuildContext context) {
-    return LongPressDraggable(
-      axis: Axis.vertical,
-      dragAnchorStrategy: calendarDragAnchorStrategy,
-      onDragUpdate: (details) {
-        var difference =
-            ((details.globalPosition.dy - feedbackOffset.dy) / 5).truncate();
-        if (difference != fiveMinuteIncrements) {
-          setState(() {
-            fiveMinuteIncrements = difference;
-            widget.setAppBarText(fiveMinuteIncrements.toString());
-          });
-        }
-      },
-      onDragEnd: (details) {
-        DateTime newStartTime =
-            widget.plan.start.add(Duration(minutes: 5 * fiveMinuteIncrements));
-        widget.setAppBarText(
-            'update start time to: ${newStartTime.hour}:${newStartTime.minute}');
-      },
-      feedback: CalendarContainer(
-        title: widget.plan.title,
-        height: widget.height,
-        width: widget.width,
-        start: widget.plan.start.add(Duration(minutes: 5 * fiveMinuteIncrements)),
-        duration: widget.plan.duration,
-      ),
-      feedbackOffset: feedbackOffset,
-      childWhenDragging: Opacity(
-        opacity: .7,
-        child: CalendarContainer(
+    return MyDraggable(
+        feedback: CalendarContainer(
           title: widget.plan.title,
           height: widget.height,
           width: widget.width,
           start: widget.plan.start,
           duration: widget.plan.duration,
         ),
-      ),
-      child: CalendarContainer(
-        title: widget.plan.title,
-        height: widget.height,
-        width: widget.width,
-        start: widget.plan.start,
-        duration: widget.plan.duration,
-      ),
-    );
+        dragAnchorStrategy: calendarDragAnchorStrategy,
+        onDragEnd: (offset) {},
+        childWhenDragging: Opacity(
+          opacity: .7,
+          child: CalendarContainer(
+            title: widget.plan.title,
+            height: widget.height,
+            width: widget.width,
+            start: widget.plan.start,
+            duration: widget.plan.duration,
+          ),
+        ),
+        child: CalendarContainer(
+          title: widget.plan.title,
+          height: widget.height,
+          width: widget.width,
+          start: widget.plan.start,
+          duration: widget.plan.duration,
+        ));
+
+
+    // return LongPressDraggable(
+    //   axis: Axis.vertical,
+    //   dragAnchorStrategy: calendarDragAnchorStrategy,
+    //   onDragUpdate: (details) {
+    //     var difference =
+    //         ((details.globalPosition.dy - feedbackOffset.dy) / 5).truncate();
+    //     if (difference != fiveMinuteIncrements) {
+    //       setState(() {
+    //         fiveMinuteIncrements = difference;
+    //         widget.setAppBarText(fiveMinuteIncrements.toString());
+    //       });
+    //     }
+    //   },
+    //   onDragEnd: (details) {
+    //     DateTime newStartTime =
+    //         widget.plan.start.add(Duration(minutes: 5 * fiveMinuteIncrements));
+    //     widget.setAppBarText(
+    //         'update start time to: ${newStartTime.hour}:${newStartTime.minute}');
+    //   },
+    //   feedback: CalendarContainer(
+    //     title: widget.plan.title,
+    //     height: widget.height,
+    //     width: widget.width,
+    //     start: widget.plan.start.add(Duration(minutes: 5 * fiveMinuteIncrements)),
+    //     duration: widget.plan.duration,
+    //   ),
+    //   feedbackOffset: feedbackOffset,
+    //   childWhenDragging: Opacity(
+    //     opacity: .7,
+    //     child: CalendarContainer(
+    //       title: widget.plan.title,
+    //       height: widget.height,
+    //       width: widget.width,
+    //       start: widget.plan.start,
+    //       duration: widget.plan.duration,
+    //     ),
+    //   ),
+    //   child: CalendarContainer(
+    //     title: widget.plan.title,
+    //     height: widget.height,
+    //     width: widget.width,
+    //     start: widget.plan.start,
+    //     duration: widget.plan.duration,
+    //   ),
+    // );
   }
 }
 
@@ -284,13 +314,17 @@ class _TaskDraggable extends State<TaskDraggable> {
   var feedbackOffset = Offset.zero;
   var fiveMinuteIncrements = 0;
 
-  Offset taskDragAnchorStrategy(Draggable<Object> draggable, BuildContext context, Offset position) {
+
+  Offset taskDragAnchorStrategy(
+      Draggable<Object> draggable, BuildContext context, Offset position) {
     final RenderBox renderObject = context.findRenderObject()! as RenderBox;
     setState(() {
-      var distanceFromTopOfDraggableToTopOfCalendar_InMinutes = (position.dy - widget.calendarVerticalOffset).toInt(); 
-      var minutesScrolled = widget.scrollController.offset.toInt(); 
-      var topOfDraggableInMinutes = minutesScrolled + distanceFromTopOfDraggableToTopOfCalendar_InMinutes; 
-      start = start.add(Duration(minutes: topOfDraggableInMinutes)); 
+      var distanceFromTopOfDraggableToTopOfCalendar_InMinutes =
+          (position.dy - widget.calendarVerticalOffset).toInt();
+      var minutesScrolled = widget.scrollController.offset.toInt();
+      var topOfDraggableInMinutes =
+          minutesScrolled + distanceFromTopOfDraggableToTopOfCalendar_InMinutes;
+      start = start.add(Duration(minutes: topOfDraggableInMinutes));
     });
     return renderObject.globalToLocal(position);
   }
@@ -415,6 +449,7 @@ class Calendar extends StatelessWidget {
       required this.hourHeight,
       required this.sidebarWidth,
       required this.controller});
+
 
   @override
   Widget build(BuildContext context) {

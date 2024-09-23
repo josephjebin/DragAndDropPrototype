@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 
 typedef MyDragAnchorStrategy = Offset Function(
     BuildContext context, Offset position);
+typedef _OnDragEnd = void Function(Offset offset);
+
 
 class MyDraggable<T extends Object> extends StatefulWidget {
   final Widget child, feedback;
   final Widget? childWhenDragging;
   final MyDragAnchorStrategy dragAnchorStrategy;
-  final DragEndCallback onDragEnd;
+  final _OnDragEnd onDragEnd;
   final bool ignoringFeedbackSemantics, ignoringFeedbackPointer;
 
   const MyDraggable(
@@ -66,11 +68,11 @@ class _MyDraggableState extends State<MyDraggable> {
         dragStartPoint: widget.dragAnchorStrategy(context, initialPosition),
         initialPosition: initialPosition,
         feedback: widget.feedback,
-        onDragEnd: (draggableDetails) {
+        onDragEnd: (offset) {
           setState(() {
             showDefaultChild = true;
           });
-          widget.onDragEnd(draggableDetails);
+          widget.onDragEnd(offset);
         },
         overlayState:
             Overlay.of(context, debugRequiredFor: widget, rootOverlay: false),
@@ -83,7 +85,7 @@ class _MyDraggableState extends State<MyDraggable> {
 class _MyDrag extends Drag {
   final Offset dragStartPoint;
   final Widget feedback;
-  final DragEndCallback onDragEnd;
+  final _OnDragEnd onDragEnd;
   final OverlayState overlayState;
   final int viewId;
   final bool ignoringFeedbackSemantics;
@@ -117,7 +119,7 @@ class _MyDrag extends Drag {
 
   @override
   void end(DragEndDetails details) {
-    finishDrag(details);
+    finishDrag(details.globalPosition);
   }
 
   @override
@@ -153,10 +155,10 @@ class _MyDrag extends Drag {
     }
   }
 
-  void finishDrag(DragEndDetails details) {
+  void finishDrag(Offset offset) {
     _entry!.remove();
     _entry!.dispose();
     _entry = null;
-    onDragEnd(details as DraggableDetails);
+    onDragEnd(offset);
   }
 }
