@@ -20,8 +20,9 @@ class _DragprototypeState extends State<Dragprototype> {
   List<Plan> plans = <Plan>[
     Plan(title: "wake up", start: DateTime(2024, 9, 18, 7, 30), duration: 120)
   ];
-  String appBarText = "Start dragging the event / inbox task";
+  String appBarText = "Start dragging an event or inbox task";
   final keyText = GlobalKey();
+  //position of the calendar
   double calendarVerticalOffset = 0.0;
 
   @override
@@ -35,7 +36,6 @@ class _DragprototypeState extends State<Dragprototype> {
         final box = keyText.currentContext?.findRenderObject() as RenderBox;
         setState(() {
           calendarVerticalOffset = box.localToGlobal(Offset.zero).dy;
-          print(calendarVerticalOffset);
         });
       });
 
@@ -81,7 +81,6 @@ class _DragprototypeState extends State<Dragprototype> {
                   top: (plans.first.minutesFromMidnight - minutesScrolled)
                       .toDouble(),
                   left: sidebarWidth + 25,
-                  height: plans.first.duration.toDouble(),
                   setAppBarText: (value) {
                     setState(() {
                       appBarText = value;
@@ -110,11 +109,11 @@ class Plan {
   }
 }
 
-//Calendar draggables don't need to calculate height from the top of the calendar - it already has an associated time,
+//Calendar draggables don't need to calculate distance from the top of the calendar - it already has an associated time,
 //so we only need to worry about how much the calendar draggable is dragged.
 class CalendarDraggable extends StatelessWidget {
   Plan plan;
-  double top, left, height, width = 315.0;
+  double top, left, width = 315.0;
   final ValueSetter<String> setAppBarText;
 
   CalendarDraggable(
@@ -122,7 +121,6 @@ class CalendarDraggable extends StatelessWidget {
       required this.plan,
       required this.top,
       required this.left,
-      required this.height,
       required this.setAppBarText});
 
   @override
@@ -132,7 +130,6 @@ class CalendarDraggable extends StatelessWidget {
       left: left,
       child: CalendarLongPressDraggable(
         plan: plan,
-        height: height,
         width: width,
         top: top,
         setAppBarText: setAppBarText,
@@ -145,13 +142,11 @@ class CalendarLongPressDraggable extends StatefulWidget {
   const CalendarLongPressDraggable(
       {super.key,
       required this.plan,
-      required this.height,
       required this.width,
       required this.top,
       required this.setAppBarText});
 
   final Plan plan;
-  final double height;
   final double width;
   final double top;
   final ValueSetter<String> setAppBarText;
@@ -163,14 +158,10 @@ class CalendarLongPressDraggable extends StatefulWidget {
 
 class _CalendarLongPressDraggableState
     extends State<CalendarLongPressDraggable> {
-  var feedbackOffset = Offset.zero;
   var _deltaFiveMinuteIncrements = 0;
 
   Offset calendarDragAnchorStrategy(BuildContext context, Offset position) {
     final RenderBox renderObject = context.findRenderObject()! as RenderBox;
-    setState(() {
-      feedbackOffset = position;
-    });
     return renderObject.globalToLocal(position);
   }
 
@@ -197,15 +188,12 @@ class _CalendarLongPressDraggableState
               .add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
           widget.setAppBarText(
               'update start time to: ${newStartTime.hour}:${newStartTime.minute}');
-          setState(() {
-            _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
-          });
         },
         childWhenDragging: Opacity(
           opacity: .7,
           child: ScheduledContainer(
             title: widget.plan.title,
-            height: widget.height,
+            height: widget.plan.duration.toDouble(),
             width: widget.width,
             start: widget.plan.start,
             duration: widget.plan.duration,
@@ -213,7 +201,7 @@ class _CalendarLongPressDraggableState
         ),
         child: ScheduledContainer(
           title: widget.plan.title,
-          height: widget.height,
+          height: widget.plan.duration.toDouble(),
           width: widget.width,
           start: widget.plan.start,
           duration: widget.plan.duration,
