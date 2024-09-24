@@ -348,9 +348,10 @@ class _TaskDraggable extends State<TaskDraggable> {
       
     setState(() {
       start = DateTime(2024).add(Duration(minutes: topOfDraggableInMinutes - remainder));
+      widget.setAppBarText(start.toString()); 
     });
-    // print('position:$position, distance:$distanceFromTopOfDraggableToTopOfCalendar_InMinutes,minutesScrolled:$minutesScrolled,globalToLocal:${renderObject.globalToLocal(position)}'); 
-    return Offset(draggableToPointerOffset.dx, draggableToPointerOffset.dy - remainder);
+    print('position:$position, distance:$distanceFromTopOfDraggableToTopOfCalendar_InMinutes,topInMins:$topOfDraggableInMinutes,globalToLocal:${renderObject.globalToLocal(position)}, remainder:$remainder'); 
+    return Offset(draggableToPointerOffset.dx, draggableToPointerOffset.dy + remainder);
   }
 
   @override
