@@ -124,7 +124,7 @@ class CalendarDraggable extends StatelessWidget {
       required this.setAppBarText});
 
   @override
-  Widget build(BuildContext build) {
+  Widget build(BuildContext context) {
     return Positioned(
       top: top,
       left: left,
@@ -206,52 +206,6 @@ class _CalendarLongPressDraggableState
           start: widget.plan.start,
           duration: widget.plan.duration,
         ));
-
-    // return LongPressDraggable(
-    //   axis: Axis.vertical,
-    //   dragAnchorStrategy: calendarDragAnchorStrategy,
-    //   onDragUpdate: (details) {
-    //     var difference =
-    //         ((details.globalPosition.dy - feedbackOffset.dy) / 5).truncate();
-    //     if (difference != fiveMinuteIncrements) {
-    //       setState(() {
-    //         fiveMinuteIncrements = difference;
-    //         widget.setAppBarText(fiveMinuteIncrements.toString());
-    //       });
-    //     }
-    //   },
-    //   onDragEnd: (details) {
-    //     DateTime newStartTime =
-    //         widget.plan.start.add(Duration(minutes: 5 * fiveMinuteIncrements));
-    //     widget.setAppBarText(
-    //         'update start time to: ${newStartTime.hour}:${newStartTime.minute}');
-    //   },
-    //   feedback: CalendarContainer(
-    //     title: widget.plan.title,
-    //     height: widget.height,
-    //     width: widget.width,
-    //     start: widget.plan.start.add(Duration(minutes: 5 * fiveMinuteIncrements)),
-    //     duration: widget.plan.duration,
-    //   ),
-    //   feedbackOffset: feedbackOffset,
-    //   childWhenDragging: Opacity(
-    //     opacity: .7,
-    //     child: CalendarContainer(
-    //       title: widget.plan.title,
-    //       height: widget.height,
-    //       width: widget.width,
-    //       start: widget.plan.start,
-    //       duration: widget.plan.duration,
-    //     ),
-    //   ),
-    //   child: CalendarContainer(
-    //     title: widget.plan.title,
-    //     height: widget.height,
-    //     width: widget.width,
-    //     start: widget.plan.start,
-    //     duration: widget.plan.duration,
-    //   ),
-    // );
   }
 }
 
@@ -285,24 +239,20 @@ class ScheduledContainer extends StatelessWidget {
 }
 
 class UnscheduledContainer extends StatelessWidget {
-  final String title; 
-  final int duration; 
+  final String title;
+  final int duration;
 
-  const UnscheduledContainer({super.key, required this.title, required this.duration}); 
+  const UnscheduledContainer(
+      {super.key, required this.title, required this.duration});
 
-  @override 
+  @override
   Widget build(BuildContext context) {
     return Container(
-      height: duration.toDouble(), 
-      width: 315.0,
-      decoration: BoxDecoration(
-        color: Colors.blue, border: Border.all(color: Colors.black)
-      ),
-      child: Text(
-        style: textStyle,
-        title
-      )
-    );
+        height: duration.toDouble(),
+        width: 315.0,
+        decoration: BoxDecoration(
+            color: Colors.blue, border: Border.all(color: Colors.black)),
+        child: Text(style: textStyle, title));
   }
 }
 
@@ -375,9 +325,6 @@ class _TaskDraggable extends State<TaskDraggable> {
             start.add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
         widget.setAppBarText(
             'update start time to: ${newStartTime.hour}:${newStartTime.minute}');
-        setState(() {
-          _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
-        });
       },
       feedback: UnscheduledContainer(
         title: widget.task.title,
@@ -421,7 +368,7 @@ class InboxButton extends StatelessWidget {
   }
 }
 
-class Inbox extends StatefulWidget {
+class Inbox extends StatelessWidget {
   final ScrollController scrollController;
   final ValueSetter<String> setAppBarText;
   final double calendarVerticalOffset;
@@ -432,14 +379,7 @@ class Inbox extends StatefulWidget {
       required this.calendarVerticalOffset});
 
   @override
-  State<Inbox> createState() => _Inbox();
-}
-
-class _Inbox extends State<Inbox> {
-  late List<Widget> tasks;
-
-  @override
-  Widget build(BuildContext build) {
+  Widget build(BuildContext context) {
     return SizedBox(
       height: 200,
       child: Column(
@@ -455,9 +395,9 @@ class _Inbox extends State<Inbox> {
           ),
           TaskDraggable(
             task: Task(title: "task 1", duration: 120),
-            scrollController: widget.scrollController,
-            calendarVerticalOffset: widget.calendarVerticalOffset,
-            setAppBarText: widget.setAppBarText,
+            scrollController: scrollController,
+            calendarVerticalOffset: calendarVerticalOffset,
+            setAppBarText: setAppBarText,
           )
         ],
       ),

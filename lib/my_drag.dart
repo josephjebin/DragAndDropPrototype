@@ -8,7 +8,7 @@ typedef _OnDrag = void Function(int deltaFiveMinuteIncrements);
 
 class MyDraggable<T extends Object> extends StatefulWidget {
   final Widget child, feedback;
-  final Widget? childWhenDragging;
+  final Widget childWhenDragging;
   final MyDragAnchorStrategy dragAnchorStrategy;
   final _OnDrag onDragUpdate, onDragEnd;
   final bool ignoringFeedbackSemantics, ignoringFeedbackPointer;
@@ -16,7 +16,7 @@ class MyDraggable<T extends Object> extends StatefulWidget {
   const MyDraggable(
       {required this.child,
       required this.feedback,
-      this.childWhenDragging,
+      required this.childWhenDragging,
       required this.dragAnchorStrategy,
       required this.onDragEnd,
       required this.onDragUpdate,
@@ -142,6 +142,7 @@ class _MyDrag extends Drag  {
 
   Widget _build(BuildContext context) {
     return Positioned(
+      //hardcoded to sidebar width (40) + 25. this is what's used for the calendar draggable
       left: 65.0,
       top: _overlayOffset.dy,
       child: ExcludeSemantics(
@@ -175,14 +176,6 @@ class _MyDrag extends Drag  {
         _overlayOffset = initialPointerOffset - draggableToPointerOffset + Offset(0.0, newDelta * 5);
         _entry!.markNeedsBuild();
       }
-
-    //stole this code from file with LongPressDraggable. Could be useful later when overlaySpaceOffset != pointerOffset
-    // if (overlayState.mounted) {
-      // final RenderBox box =
-      //     overlayState.context.findRenderObject()! as RenderBox;
-      // final Offset overlaySpaceOffset = box.globalToLocal(pointerOffset);
-      // _overlayOffset = overlaySpaceOffset - draggableToPointerOffset;
-    // }
   }
 
   void disposeEntry() {
