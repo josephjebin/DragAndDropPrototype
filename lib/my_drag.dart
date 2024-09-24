@@ -101,8 +101,8 @@ class _MyDrag extends Drag  {
   //number of five minute increments the draggable has changed
   //e.g. -1 means moved into the previous 5-minute interval (7:30 --> 7:25)
   //e.g. 3 means moved 3 5-minute intervals down (7:30 --> 7:45)
-  int deltaFiveMinuteIncrements = 0;
-
+  //initialized to -1, so first call to updateDrag will update this to 0 and calculate _overlayOffset
+  int deltaFiveMinuteIncrements = -1;
 
   _MyDrag(
       {required this.draggableToPointerOffset,
@@ -162,6 +162,8 @@ class _MyDrag extends Drag  {
       //     overlayState.context.findRenderObject()! as RenderBox;
       // final Offset overlaySpaceOffset = box.globalToLocal(pointerOffset);
       // _overlayOffset = overlaySpaceOffset - draggableToPointerOffset;
+
+      late int newDelta; 
       
       //moving up has different logic than moving down because you only need to move up 1 minute to go into the previous 5-minute interval.
       //you need to move down 5 minutes to go into the next 5-minute interval
@@ -171,18 +173,17 @@ class _MyDrag extends Drag  {
         //e.g. 2: if you move up 5 mins, you should also be in the previous 5-minute interval. 
         //e.g. 3: if you move up 6 mins, you should be -2 5-minute intervals intervals (7:30 - 6 mins = 7:24 --> should be in the 5-minute interval starting at 7:20)
         int difference = ((initialPointerOffset.dy - pointerOffset.dy - 1) / 5).truncate();
-        int newDelta = -1 - difference; 
-        if(newDelta != deltaFiveMinuteIncrements) {
-          deltaFiveMinuteIncrements = newDelta; 
-          _overlayOffset = initialPointerOffset - draggableToPointerOffset + Offset(0.0, newDelta * 5) ;
-        }
-
+        newDelta = -1 - difference; 
       } else {
-        _overlayOffset = pointerOffset - draggableToPointerOffset;
-        
+        newDelta = ((pointerOffset.dy - initialPointerOffset.dy) / 5).truncate(); 
       }
 
-      _entry!.markNeedsBuild();
+      if(newDelta != deltaFiveMinuteIncrements) {
+        deltaFiveMinuteIncrements = newDelta; 
+        _overlayOffset = initialPointerOffset - draggableToPointerOffset + Offset(0.0, newDelta * 5);;
+        _entry!.markNeedsBuild();
+      }
+
     // }
   }
 
