@@ -188,7 +188,20 @@ class _CalendarLongPressDraggableState
           duration: widget.plan.duration,
         ),
         dragAnchorStrategy: calendarDragAnchorStrategy,
-        onDragEnd: (offset) {},
+        onDragUpdate: (offset) {
+          var difference = ((offset.dy - feedbackOffset.dy) / 5).truncate();
+          if (difference != fiveMinuteIncrements) {
+            DateTime newStartTime = widget.plan.start.add(Duration(minutes: 5 * fiveMinuteIncrements));
+            setState(() {
+              fiveMinuteIncrements = difference;
+              widget.setAppBarText('${newStartTime.hour}:${newStartTime.minute}');
+            });
+          }
+        },
+        onDragEnd: (offset) {
+          DateTime newStartTime = widget.plan.start.add(Duration(minutes: 5 * fiveMinuteIncrements));
+          widget.setAppBarText('update start time to: ${newStartTime.hour}:${newStartTime.minute}');
+        },
         childWhenDragging: Opacity(
           opacity: .7,
           child: CalendarContainer(
