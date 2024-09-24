@@ -55,21 +55,19 @@ class _DragprototypeState extends State<Dragprototype> {
           child: Scaffold(
             backgroundColor: Colors.white,
             appBar: AppBar(
-              backgroundColor: Colors.blueGrey,
-              title: Text(
-                appBarText,
-                softWrap: true,
-              )
-            ),
+                backgroundColor: Colors.blueGrey,
+                title: Text(
+                  appBarText,
+                  softWrap: true,
+                )),
             bottomNavigationBar: InboxButton(
-              scrollController: scrollController,
-              calendarVerticalOffset: calendarVerticalOffset,
-              setAppBarText: (value) {
-                setState(() {
-                  appBarText = value;
-                });
-              }
-            ),
+                scrollController: scrollController,
+                calendarVerticalOffset: calendarVerticalOffset,
+                setAppBarText: (value) {
+                  setState(() {
+                    appBarText = value;
+                  });
+                }),
             body: Stack(
               key: keyText,
               children: [
@@ -84,7 +82,6 @@ class _DragprototypeState extends State<Dragprototype> {
                       .toDouble(),
                   left: sidebarWidth + 25,
                   height: plans.first.duration.toDouble(),
-                  width: 315.0,
                   setAppBarText: (value) {
                     setState(() {
                       appBarText = value;
@@ -126,7 +123,6 @@ class CalendarDraggable extends StatelessWidget {
       required this.top,
       required this.left,
       required this.height,
-      required this.width,
       required this.setAppBarText});
 
   @override
@@ -170,7 +166,6 @@ class _CalendarLongPressDraggableState
   var feedbackOffset = Offset.zero;
   var _deltaFiveMinuteIncrements = 0;
 
-
   Offset calendarDragAnchorStrategy(BuildContext context, Offset position) {
     final RenderBox renderObject = context.findRenderObject()! as RenderBox;
     setState(() {
@@ -182,17 +177,15 @@ class _CalendarLongPressDraggableState
   @override
   Widget build(BuildContext context) {
     return MyDraggable(
-        feedback: CalendarContainer(
+        feedback: UnscheduledContainer(
           title: widget.plan.title,
-          height: widget.height,
-          width: widget.width,
-          start: widget.plan.start,
           duration: widget.plan.duration,
         ),
         dragAnchorStrategy: calendarDragAnchorStrategy,
         onDragUpdate: (deltaFiveMinuteIncrements) {
           if (deltaFiveMinuteIncrements != _deltaFiveMinuteIncrements) {
-            DateTime newStartTime = widget.plan.start.add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
+            DateTime newStartTime = widget.plan.start
+                .add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
             widget.setAppBarText('${newStartTime.hour}:${newStartTime.minute}');
             setState(() {
               _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
@@ -200,15 +193,17 @@ class _CalendarLongPressDraggableState
           }
         },
         onDragEnd: (deltaFiveMinuteIncrements) {
-          DateTime newStartTime = widget.plan.start.add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
-          widget.setAppBarText('update start time to: ${newStartTime.hour}:${newStartTime.minute}');
+          DateTime newStartTime = widget.plan.start
+              .add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
+          widget.setAppBarText(
+              'update start time to: ${newStartTime.hour}:${newStartTime.minute}');
           setState(() {
-              _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
+            _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
           });
         },
         childWhenDragging: Opacity(
           opacity: .7,
-          child: CalendarContainer(
+          child: ScheduledContainer(
             title: widget.plan.title,
             height: widget.height,
             width: widget.width,
@@ -216,14 +211,13 @@ class _CalendarLongPressDraggableState
             duration: widget.plan.duration,
           ),
         ),
-        child: CalendarContainer(
+        child: ScheduledContainer(
           title: widget.plan.title,
           height: widget.height,
           width: widget.width,
           start: widget.plan.start,
           duration: widget.plan.duration,
         ));
-
 
     // return LongPressDraggable(
     //   axis: Axis.vertical,
@@ -273,8 +267,8 @@ class _CalendarLongPressDraggableState
   }
 }
 
-class CalendarContainer extends StatelessWidget {
-  const CalendarContainer(
+class ScheduledContainer extends StatelessWidget {
+  const ScheduledContainer(
       {super.key,
       required this.title,
       required this.height,
@@ -299,6 +293,28 @@ class CalendarContainer extends StatelessWidget {
         child: Text(
             style: textStyle,
             '${start.hour}:${start.minute} - ${end.hour}:${end.minute}: $title'));
+  }
+}
+
+class UnscheduledContainer extends StatelessWidget {
+  final String title; 
+  final int duration; 
+
+  const UnscheduledContainer({super.key, required this.title, required this.duration}); 
+
+  @override 
+  Widget build(BuildContext context) {
+    return Container(
+      height: duration.toDouble(), 
+      width: 315.0,
+      decoration: BoxDecoration(
+        color: Colors.blue, border: Border.all(color: Colors.black)
+      ),
+      child: Text(
+        style: textStyle,
+        title
+      )
+    );
   }
 }
 
@@ -330,28 +346,26 @@ class _TaskDraggable extends State<TaskDraggable> {
   DateTime start = DateTime.now();
   var _deltaFiveMinuteIncrements = 0;
 
-  Offset calendarDragAnchorStrategy(BuildContext context, Offset position) {
-    final RenderBox renderObject = context.findRenderObject()! as RenderBox;
-    return renderObject.globalToLocal(position);
-  }
-
   Offset taskDragAnchorStrategy(BuildContext context, Offset position) {
     final RenderBox renderObject = context.findRenderObject()! as RenderBox;
-    final Offset draggableToPointerOffset = renderObject.globalToLocal(position); 
-    var topOfDraggableOffset = position - draggableToPointerOffset; 
+    final Offset draggableToPointerOffset =
+        renderObject.globalToLocal(position);
+    var topOfDraggableOffset = position - draggableToPointerOffset;
     var distanceFromTopOfDraggableToTopOfCalendar_InMinutes =
         (topOfDraggableOffset.dy - widget.calendarVerticalOffset).toInt();
     var minutesScrolled = widget.scrollController.offset.toInt();
-    var topOfDraggableInMinutes = minutesScrolled + distanceFromTopOfDraggableToTopOfCalendar_InMinutes;
+    var topOfDraggableInMinutes =
+        minutesScrolled + distanceFromTopOfDraggableToTopOfCalendar_InMinutes;
     //topOfDraggable could be 7:39, but we need it to be a multiple of 5, so calculate the remainder and shift it up by that much
-    var remainder = topOfDraggableInMinutes % 5; 
-      
+    var remainder = topOfDraggableInMinutes % 5;
+
     setState(() {
-      start = DateTime(2024).add(Duration(minutes: topOfDraggableInMinutes - remainder));
-      widget.setAppBarText(start.toString()); 
+      start = DateTime(2024)
+          .add(Duration(minutes: topOfDraggableInMinutes - remainder));
+      widget.setAppBarText(start.toString());
     });
-    print('position:$position, distance:$distanceFromTopOfDraggableToTopOfCalendar_InMinutes,topInMins:$topOfDraggableInMinutes,globalToLocal:${renderObject.globalToLocal(position)}, remainder:$remainder'); 
-    return Offset(draggableToPointerOffset.dx, draggableToPointerOffset.dy + remainder);
+    return Offset(
+        draggableToPointerOffset.dx, draggableToPointerOffset.dy + remainder);
   }
 
   @override
@@ -359,46 +373,38 @@ class _TaskDraggable extends State<TaskDraggable> {
     return MyDraggable(
       dragAnchorStrategy: taskDragAnchorStrategy,
       onDragUpdate: (deltaFiveMinuteIncrements) {
-          if (deltaFiveMinuteIncrements != _deltaFiveMinuteIncrements) {
-            DateTime newStartTime = start.add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
-            widget.setAppBarText('${newStartTime.hour}:${newStartTime.minute}');
-            setState(() {
-              _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
-            });
-          }
-        },
-        onDragEnd: (deltaFiveMinuteIncrements) {
-          DateTime newStartTime = start.add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
-          widget.setAppBarText('update start time to: ${newStartTime.hour}:${newStartTime.minute}');
+        if (deltaFiveMinuteIncrements != _deltaFiveMinuteIncrements) {
+          DateTime newStartTime =
+              start.add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
+          widget.setAppBarText('${newStartTime.hour}:${newStartTime.minute}');
           setState(() {
-              _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
+            _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
           });
-        },
-      feedback: CalendarContainer(
+        }
+      },
+      onDragEnd: (deltaFiveMinuteIncrements) {
+        DateTime newStartTime =
+            start.add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
+        widget.setAppBarText(
+            'update start time to: ${newStartTime.hour}:${newStartTime.minute}');
+        setState(() {
+          _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
+        });
+      },
+      feedback: UnscheduledContainer(
         title: widget.task.title,
-        height: widget.task.duration.toDouble(),
-        width: 315.0,
-        start: start,
         duration: widget.task.duration,
       ),
-      //i know this is nasty. i just needed a non-null widget 
-      childWhenDragging: Text(''),
-      child: CalendarContainer(
-        title: widget.task.title,
-        height: 40.0,
-        width: 315.0,
-        start: start,
-        duration: widget.task.duration,
-      ),
+      childWhenDragging: Container(),
+      child: Container(
+          height: 40,
+          width: 315,
+          decoration: BoxDecoration(
+              color: Colors.blue, border: Border.all(color: Colors.black)),
+          child: Text(style: textStyle, widget.task.title)),
     );
   }
 }
-
-// Offset taskDragAnchorStrategy(
-//     Draggable<Object> draggable, BuildContext context, Offset position) {
-//   final RenderBox renderObject = context.findRenderObject()! as RenderBox;
-//   return renderObject.globalToLocal(position);
-// }
 
 class InboxButton extends StatelessWidget {
   final ScrollController scrollController;
@@ -446,19 +452,26 @@ class _Inbox extends State<Inbox> {
 
   @override
   Widget build(BuildContext build) {
-    tasks = <TaskDraggable>[
-      TaskDraggable(
-        task: Task(title: "task 1", duration: 120),
-        scrollController: widget.scrollController,
-        calendarVerticalOffset: widget.calendarVerticalOffset,
-        setAppBarText: widget.setAppBarText,
-      )
-    ];
-
-    return Container(
+    return SizedBox(
       height: 200,
       child: Column(
-        children: tasks,
+        children: [
+          Text('Inbox'),
+          Row(
+            children: [
+              Expanded(
+                  child: SizedBox(
+                height: 20,
+              )),
+            ],
+          ),
+          TaskDraggable(
+            task: Task(title: "task 1", duration: 120),
+            scrollController: widget.scrollController,
+            calendarVerticalOffset: widget.calendarVerticalOffset,
+            setAppBarText: widget.setAppBarText,
+          )
+        ],
       ),
     );
   }
@@ -474,7 +487,6 @@ class Calendar extends StatelessWidget {
       required this.hourHeight,
       required this.sidebarWidth,
       required this.controller});
-
 
   @override
   Widget build(BuildContext context) {

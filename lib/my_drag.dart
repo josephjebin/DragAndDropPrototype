@@ -142,7 +142,7 @@ class _MyDrag extends Drag  {
 
   Widget _build(BuildContext context) {
     return Positioned(
-      left: _overlayOffset.dx,
+      left: 65.0,
       top: _overlayOffset.dy,
       child: ExcludeSemantics(
         excluding: ignoringFeedbackSemantics,
