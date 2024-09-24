@@ -55,19 +55,21 @@ class _DragprototypeState extends State<Dragprototype> {
           child: Scaffold(
             backgroundColor: Colors.white,
             appBar: AppBar(
-                backgroundColor: Colors.blueGrey,
-                title: Text(
-                  appBarText,
-                  softWrap: true,
-                )),
+              backgroundColor: Colors.blueGrey,
+              title: Text(
+                appBarText,
+                softWrap: true,
+              )
+            ),
             bottomNavigationBar: InboxButton(
-                scrollController: scrollController,
-                calendarVerticalOffset: calendarVerticalOffset,
-                setAppBarText: (value) {
-                  setState(() {
-                    appBarText = value;
-                  });
-                }),
+              scrollController: scrollController,
+              calendarVerticalOffset: calendarVerticalOffset,
+              setAppBarText: (value) {
+                setState(() {
+                  appBarText = value;
+                });
+              }
+            ),
             body: Stack(
               key: keyText,
               children: [
@@ -166,7 +168,7 @@ class CalendarLongPressDraggable extends StatefulWidget {
 class _CalendarLongPressDraggableState
     extends State<CalendarLongPressDraggable> {
   var feedbackOffset = Offset.zero;
-  var fiveMinuteIncrements = 0;
+  var _deltaFiveMinuteIncrements = 0;
 
 
   Offset calendarDragAnchorStrategy(BuildContext context, Offset position) {
@@ -188,19 +190,21 @@ class _CalendarLongPressDraggableState
           duration: widget.plan.duration,
         ),
         dragAnchorStrategy: calendarDragAnchorStrategy,
-        onDragUpdate: (offset) {
-          var difference = ((offset.dy - feedbackOffset.dy) / 5).truncate();
-          if (difference != fiveMinuteIncrements) {
-            DateTime newStartTime = widget.plan.start.add(Duration(minutes: 5 * fiveMinuteIncrements));
+        onDragUpdate: (deltaFiveMinuteIncrements) {
+          if (deltaFiveMinuteIncrements != _deltaFiveMinuteIncrements) {
+            DateTime newStartTime = widget.plan.start.add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
+            widget.setAppBarText('${newStartTime.hour}:${newStartTime.minute}');
             setState(() {
-              fiveMinuteIncrements = difference;
-              widget.setAppBarText('${newStartTime.hour}:${newStartTime.minute}');
+              _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
             });
           }
         },
-        onDragEnd: (offset) {
-          DateTime newStartTime = widget.plan.start.add(Duration(minutes: 5 * fiveMinuteIncrements));
+        onDragEnd: (deltaFiveMinuteIncrements) {
+          DateTime newStartTime = widget.plan.start.add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
           widget.setAppBarText('update start time to: ${newStartTime.hour}:${newStartTime.minute}');
+          setState(() {
+              _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
+          });
         },
         childWhenDragging: Opacity(
           opacity: .7,
@@ -324,45 +328,51 @@ class TaskDraggable extends StatefulWidget {
 
 class _TaskDraggable extends State<TaskDraggable> {
   DateTime start = DateTime.now();
-  var feedbackOffset = Offset.zero;
-  var fiveMinuteIncrements = 0;
+  var _deltaFiveMinuteIncrements = 0;
 
-
-  Offset taskDragAnchorStrategy(
-      Draggable<Object> draggable, BuildContext context, Offset position) {
+  Offset calendarDragAnchorStrategy(BuildContext context, Offset position) {
     final RenderBox renderObject = context.findRenderObject()! as RenderBox;
-    setState(() {
-      var distanceFromTopOfDraggableToTopOfCalendar_InMinutes =
-          (position.dy - widget.calendarVerticalOffset).toInt();
-      var minutesScrolled = widget.scrollController.offset.toInt();
-      var topOfDraggableInMinutes =
-          minutesScrolled + distanceFromTopOfDraggableToTopOfCalendar_InMinutes;
-      start = start.add(Duration(minutes: topOfDraggableInMinutes));
-    });
     return renderObject.globalToLocal(position);
+  }
+
+  Offset taskDragAnchorStrategy(BuildContext context, Offset position) {
+    final RenderBox renderObject = context.findRenderObject()! as RenderBox;
+    final Offset draggableToPointerOffset = renderObject.globalToLocal(position); 
+    var topOfDraggableOffset = position - draggableToPointerOffset; 
+    var distanceFromTopOfDraggableToTopOfCalendar_InMinutes =
+        (topOfDraggableOffset.dy - widget.calendarVerticalOffset).toInt();
+    var minutesScrolled = widget.scrollController.offset.toInt();
+    var topOfDraggableInMinutes = minutesScrolled + distanceFromTopOfDraggableToTopOfCalendar_InMinutes;
+    //topOfDraggable could be 7:39, but we need it to be a multiple of 5, so calculate the remainder and shift it up by that much
+    var remainder = topOfDraggableInMinutes % 5; 
+      
+    setState(() {
+      start = DateTime(2024).add(Duration(minutes: topOfDraggableInMinutes - remainder));
+    });
+    // print('position:$position, distance:$distanceFromTopOfDraggableToTopOfCalendar_InMinutes,minutesScrolled:$minutesScrolled,globalToLocal:${renderObject.globalToLocal(position)}'); 
+    return Offset(draggableToPointerOffset.dx, draggableToPointerOffset.dy - remainder);
   }
 
   @override
   Widget build(BuildContext context) {
-    return LongPressDraggable(
-      axis: Axis.vertical,
+    return MyDraggable(
       dragAnchorStrategy: taskDragAnchorStrategy,
-      onDragUpdate: (details) {
-        var difference =
-            ((details.globalPosition.dy - feedbackOffset.dy) / 5).truncate();
-        if (difference != fiveMinuteIncrements) {
+      onDragUpdate: (deltaFiveMinuteIncrements) {
+          if (deltaFiveMinuteIncrements != _deltaFiveMinuteIncrements) {
+            DateTime newStartTime = start.add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
+            widget.setAppBarText('${newStartTime.hour}:${newStartTime.minute}');
+            setState(() {
+              _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
+            });
+          }
+        },
+        onDragEnd: (deltaFiveMinuteIncrements) {
+          DateTime newStartTime = start.add(Duration(minutes: 5 * deltaFiveMinuteIncrements));
+          widget.setAppBarText('update start time to: ${newStartTime.hour}:${newStartTime.minute}');
           setState(() {
-            fiveMinuteIncrements = difference;
-            widget.setAppBarText(fiveMinuteIncrements.toString());
+              _deltaFiveMinuteIncrements = deltaFiveMinuteIncrements;
           });
-        }
-      },
-      onDragEnd: (details) {
-        DateTime newStartTime =
-            start.add(Duration(minutes: 5 * fiveMinuteIncrements));
-        widget.setAppBarText(
-            'update start time to: ${newStartTime.hour}:${newStartTime.minute}');
-      },
+        },
       feedback: CalendarContainer(
         title: widget.task.title,
         height: widget.task.duration.toDouble(),
@@ -370,10 +380,11 @@ class _TaskDraggable extends State<TaskDraggable> {
         start: start,
         duration: widget.task.duration,
       ),
-      feedbackOffset: feedbackOffset,
+      //i know this is nasty. i just needed a non-null widget 
+      childWhenDragging: Text(''),
       child: CalendarContainer(
         title: widget.task.title,
-        height: widget.task.duration.toDouble(),
+        height: 40.0,
         width: 315.0,
         start: start,
         duration: widget.task.duration,
@@ -382,11 +393,11 @@ class _TaskDraggable extends State<TaskDraggable> {
   }
 }
 
-Offset taskDragAnchorStrategy(
-    Draggable<Object> draggable, BuildContext context, Offset position) {
-  final RenderBox renderObject = context.findRenderObject()! as RenderBox;
-  return renderObject.globalToLocal(position);
-}
+// Offset taskDragAnchorStrategy(
+//     Draggable<Object> draggable, BuildContext context, Offset position) {
+//   final RenderBox renderObject = context.findRenderObject()! as RenderBox;
+//   return renderObject.globalToLocal(position);
+// }
 
 class InboxButton extends StatelessWidget {
   final ScrollController scrollController;

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 typedef MyDragAnchorStrategy = Offset Function(
     BuildContext context, Offset position);
-typedef _OnDrag = void Function(Offset offset);
+typedef _OnDrag = void Function(int deltaFiveMinuteIncrements);
 
 
 class MyDraggable<T extends Object> extends StatefulWidget {
@@ -72,11 +72,11 @@ class _MyDraggableState extends State<MyDraggable> {
         onDragUpdate: (offset) {
           widget.onDragUpdate(offset); 
         }, 
-        onDragEnd: (offset) {
+        onDragEnd: (deltaFiveMinuteIncrements) {
           setState(() {
             showDefaultChild = true;
           });
-          widget.onDragEnd(offset);
+          widget.onDragEnd(deltaFiveMinuteIncrements);
         },
         overlayState:
             Overlay.of(context, debugRequiredFor: widget, rootOverlay: false),
@@ -115,7 +115,6 @@ class _MyDrag extends Drag  {
       required this.ignoringFeedbackSemantics,
       required this.ignoringFeedbackPointer})
       : _pointerOffset = initialPointerOffset {
-        // print('draggableToPointerOffset:$draggableToPointerOffset, pointerOffset:$_pointerOffset'); 
     _entry = OverlayEntry(builder: _build);
     overlayState.insert(_entry!);
     updateDrag(_pointerOffset);
@@ -125,21 +124,20 @@ class _MyDrag extends Drag  {
   void update(DragUpdateDetails details) {
     //not entirely accurate - we've restricted pointer offset to only move vertically 
     _pointerOffset += Offset(0.0, details.delta.dy);
-    // print('_pointerOffset:$_pointerOffset'); 
     updateDrag(_pointerOffset);
-    onDragUpdate(details.globalPosition); 
+    onDragUpdate(deltaFiveMinuteIncrements); 
   }
 
   @override
   void end(DragEndDetails details) {
-    finishDrag(details.globalPosition);
+    disposeEntry();
+    onDragEnd(deltaFiveMinuteIncrements);
+
   }
 
   @override
   void cancel() {
-    _entry!.remove();
-    _entry!.dispose();
-    _entry = null;
+    disposeEntry();
   }
 
   Widget _build(BuildContext context) {
@@ -157,12 +155,6 @@ class _MyDrag extends Drag  {
   }
 
   void updateDrag(Offset pointerOffset) {
-    // if (overlayState.mounted) {
-      // final RenderBox box =
-      //     overlayState.context.findRenderObject()! as RenderBox;
-      // final Offset overlaySpaceOffset = box.globalToLocal(pointerOffset);
-      // _overlayOffset = overlaySpaceOffset - draggableToPointerOffset;
-
       late int newDelta; 
       
       //moving up has different logic than moving down because you only need to move up 1 minute to go into the previous 5-minute interval.
@@ -180,17 +172,22 @@ class _MyDrag extends Drag  {
 
       if(newDelta != deltaFiveMinuteIncrements) {
         deltaFiveMinuteIncrements = newDelta; 
-        _overlayOffset = initialPointerOffset - draggableToPointerOffset + Offset(0.0, newDelta * 5);;
+        _overlayOffset = initialPointerOffset - draggableToPointerOffset + Offset(0.0, newDelta * 5);
         _entry!.markNeedsBuild();
       }
 
+    //stole this code from file with LongPressDraggable. Could be useful later when overlaySpaceOffset != pointerOffset
+    // if (overlayState.mounted) {
+      // final RenderBox box =
+      //     overlayState.context.findRenderObject()! as RenderBox;
+      // final Offset overlaySpaceOffset = box.globalToLocal(pointerOffset);
+      // _overlayOffset = overlaySpaceOffset - draggableToPointerOffset;
     // }
   }
 
-  void finishDrag(Offset offset) {
+  void disposeEntry() {
     _entry!.remove();
     _entry!.dispose();
     _entry = null;
-    onDragEnd(offset);
   }
 }
